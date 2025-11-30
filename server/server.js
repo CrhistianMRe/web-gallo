@@ -101,6 +101,59 @@ app.get("/workouts", async (req, res) => {
 });
 
 
+//Add workout 
+app.post("/workout", async (req, res) => {
+  const { workout_date, workout_length, exercise_id } = req.body;
+  const conn = await db.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    const [r] = await conn.query(
+      "INSERT INTO workout (workout_date, workout_length, exercise_id) VALUES (?,?,?)",
+      [workout_date, workout_length, exercise_id]
+    );
+
+    await conn.commit();
+    conn.release();
+    res.json({ id: r.insertId });
+
+  } catch (err) {
+    await conn.rollback();
+    conn.release();
+    res.status(500).json({ error: err.message });
+  }
+
+});
+
+// Receives list of sets to avoid request repetition
+app.post("/workout_sets", async (req, res) => {
+  const { sets } = req.body; // sets = [{ rep_amount, weight_amount, to_failure, workout_id }, ...]
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const insertedIds = [];
+
+    for (const s of sets) {
+      const [r] = await conn.query(
+        "INSERT INTO workout_set (rep_amount, weight_amount, to_failure, workout_id) VALUES (?,?,?,?)",
+        [s.rep_amount, s.weight_amount, s.to_failure, s.workout_id]
+      );
+      insertedIds.push(r.insertId);
+    }
+
+    await conn.commit();
+    conn.release();
+
+    res.json({ success: true, insertedIds });
+  } catch (err) {
+    await conn.rollback();
+    conn.release();
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 app.listen(3000, () => console.log("API running on port 3000"));
 

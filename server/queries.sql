@@ -28,3 +28,11 @@ ON workout.exercise_id = exercise.id
 INNER JOIN workout_set
 ON workout_set.workout_id = workout.id
 
+
+-- Insert of workout table
+
+INSERT INTO workout (workout_date, workout_length, exercise_id) VALUES ("2004-04-23", 0040.00, 1)
+
+
+-- Insert of workout_set table
+INSERT INTO workout_set (rep_amount, weight_amount, to_failure, workout_id) VALUES (10, 80.0, 1, 1)
