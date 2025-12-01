@@ -1,58 +1,119 @@
-import type { Exercise } from "../types";
+import React from "react";
 
-export function ExerciseCard({ exercise }: { exercise: Exercise }) {
+export interface ExerciseCardProps {
+  name: string;
+  description?: string | null;
+  weightRequired: boolean;
+  imageUrl?: string | null;
+  bodyParts?: string[];
+}
+
+export const ExerciseCard: React.FC<ExerciseCardProps> = ({
+  name,
+  description,
+  weightRequired,
+  imageUrl,
+  bodyParts = [],
+}) => {
   return (
     <div
       style={{
-        padding: "1rem",
-        borderRadius: "0.75rem",
         background: "#020617",
+        borderRadius: 12,
+        padding: "0.75rem 1rem",
         border: "1px solid #111827",
         display: "flex",
-        gap: "1rem"
+        gap: "0.75rem",
       }}
     >
-      {exercise.imageUrl && (
-        <img
-          src={exercise.imageUrl}
-          alt={exercise.name}
-          style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover" }}
-        />
-      )}
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <h3 style={{ margin: 0, fontSize: "1rem" }}>{exercise.name}</h3>
-          {exercise.weightRequired && (
-            <span
-              style={{
-                fontSize: "0.75rem",
-                padding: "0.15rem 0.5rem",
-                borderRadius: 999,
-                border: "1px solid #4b5563"
-              }}
-            >
-              + Weights
-            </span>
-          )}
+      {imageUrl && (
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 12,
+            overflow: "hidden",
+            flexShrink: 0,
+            background: "#0f172a",
+          }}
+        >
+          <img
+            src={imageUrl}
+            alt={name}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
         </div>
-        {exercise.description && (
-          <p style={{ margin: "0.25rem 0", fontSize: "0.85rem", opacity: 0.9 }}>
-            {exercise.description}
+      )}
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: "0.4rem",
+            marginBottom: "0.25rem",
+          }}
+        >
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "1rem",
+              fontWeight: 600,
+            }}
+          >
+            {name}
+          </h3>
+          <span
+            style={{
+              fontSize: "0.8rem",
+              padding: "0.05rem 0.4rem",
+              borderRadius: 999,
+              background: weightRequired ? "#f97316" : "#22c55e",
+              color: "#020617",
+              fontWeight: 600,
+            }}
+          >
+            {weightRequired ? "Weights" : "Bodyweight"}
+          </span>
+        </div>
+
+        {description && (
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.85rem",
+              opacity: 0.9,
+            }}
+          >
+            {description}
           </p>
         )}
-        {exercise.bodyParts.length > 0 && (
-          <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.35rem" }}>
-            {exercise.bodyParts.map(bp => (
+
+        {bodyParts.length > 0 && (
+          <div
+            style={{
+              marginTop: "0.4rem",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.25rem",
+            }}
+          >
+            {bodyParts.map(bp => (
               <span
-                key={bp.id}
+                key={bp}
                 style={{
-                  fontSize: "0.7rem",
+                  fontSize: "0.75rem",
                   padding: "0.1rem 0.4rem",
                   borderRadius: 999,
-                  background: "#111827"
+                  background: "#0f172a",
+                  border: "1px solid #1f2937",
                 }}
               >
-                {bp.name}
+                {bp}
               </span>
             ))}
           </div>
@@ -60,4 +121,4 @@ export function ExerciseCard({ exercise }: { exercise: Exercise }) {
       </div>
     </div>
   );
-}
+};

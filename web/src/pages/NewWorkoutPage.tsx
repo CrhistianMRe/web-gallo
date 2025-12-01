@@ -1,220 +1,280 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api";
-import type { Exercise, NewWorkoutSet } from "../types";
+import { createWorkout, createWorkoutSets } from "../api/httpApi";
+
+interface SetRow {
+  repAmount: number;
+  weightAmount: number;
+  toFailure: boolean;
+}
 
 export function NewWorkoutPage() {
   const navigate = useNavigate();
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16)); // datetime-local
-  const [notes, setNotes] = useState("");
-  const [sets, setSets] = useState<NewWorkoutSet[]>([]);
-  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    api.getExercises().then(setExercises);
-  }, []);
+  const [date, setDate] = useState<string>(() => {
+    // Default to today in YYYY-MM-DD
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  });
+  const [lengthMinutes, setLengthMinutes] = useState<number>(45);
+  const [exerciseId, setExerciseId] = useState<number>(3); // default for now
+  const [sets, setSets] = useState<SetRow[]>([
+    { repAmount: 10, weightAmount: 30, toFailure: false },
+  ]);
 
-  function addSet() {
-    const defaultExerciseId = exercises[0]?.id ?? 1;
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  function updateSet(index: number, changes: Partial<SetRow>) {
+    setSets(prev =>
+      prev.map((s, i) =>
+        i === index ? { ...s, ...changes } : s
+      )
+    );
+  }
+
+  function addSetRow() {
     setSets(prev => [
       ...prev,
-      {
-        exerciseId: defaultExerciseId,
-        reps: 10,
-        weight: undefined,
-        toFailure: false
-      }
+      { repAmount: 8, weightAmount: 35, toFailure: false },
     ]);
   }
 
-  function updateSet(index: number, patch: Partial<NewWorkoutSet>) {
-    setSets(prev => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
-  }
-
-  function removeSet(index: number) {
+  function removeSetRow(index: number) {
     setSets(prev => prev.filter((_, i) => i !== index));
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (sets.length === 0) return;
+    setError(null);
+    setSuccessMsg(null);
 
-    setSaving(true);
+    if (!date) {
+      setError("Please choose a date.");
+      return;
+    }
+    if (!exerciseId || exerciseId <= 0) {
+      setError("Exercise ID must be a positive number.");
+      return;
+    }
+    if (sets.length === 0) {
+      setError("Please add at least one set.");
+      return;
+    }
+
     try {
-      const payload = {
-        userId: 1, // TODO: replace with real logged-in user
-        date: new Date(date).toISOString(),
-        notes: notes || undefined,
-        sets
-      };
-      const created = await api.createWorkout(payload);
-      navigate(`/workouts/${created.id}`);
-    } catch (err) {
-      console.error(err);
+      setSubmitting(true);
+
+      // 1) Create workout
+      const workoutRes = await createWorkout({
+        workout_date: date,
+        workout_length: Number(lengthMinutes),
+        exercise_id: Number(exerciseId),
+      });
+
+      const workoutId = workoutRes.id;
+
+      // 2) Create sets for that workout
+      await createWorkoutSets({
+        sets: sets.map(s => ({
+          rep_amount: Number(s.repAmount),
+          weight_amount: Number(s.weightAmount),
+          to_failure: s.toFailure ? 1 : 0,
+          workout_id: workoutId,
+        })),
+      });
+
+      setSuccessMsg("Workout saved successfully!");
+      // Optionally navigate after a short delay:
+      setTimeout(() => {
+        navigate("/workouts");
+      }, 800);
+    } catch (err: any) {
+      setError(err.message ?? String(err));
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
   }
 
   return (
-    <div style={{ marginTop: "1.5rem" }}>
-      <h1>Log Workout</h1>
+    <div style={{ color: "white", fontFamily: "sans-serif" }}>
+      <h1>Log New Workout</h1>
+
+      {error && <p style={{ color: "#fca5a5" }}>Error: {error}</p>}
+      {successMsg && <p style={{ color: "#22c55e" }}>{successMsg}</p>}
+
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          maxWidth: 480,
+        }}
       >
-        <label>
-          <div style={{ fontSize: "0.85rem" }}>Date & time</div>
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          Date
           <input
-            type="datetime-local"
+            type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
             style={{
-              width: "100%",
-              padding: "0.45rem 0.6rem",
-              borderRadius: 8,
-              border: "1px solid #374151"
+              padding: "0.25rem 0.5rem",
+              borderRadius: 6,
+              border: "1px solid #374151",
+              background: "#020617",
+              color: "white",
             }}
           />
         </label>
 
-        <label>
-          <div style={{ fontSize: "0.85rem" }}>Notes (optional)</div>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={3}
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          Workout length (minutes)
+          <input
+            type="number"
+            min={1}
+            value={lengthMinutes}
+            onChange={e => setLengthMinutes(Number(e.target.value))}
             style={{
-              width: "100%",
-              padding: "0.45rem 0.6rem",
-              borderRadius: 8,
+              padding: "0.25rem 0.5rem",
+              borderRadius: 6,
               border: "1px solid #374151",
-              resize: "vertical"
+              background: "#020617",
+              color: "white",
             }}
           />
+        </label>
+
+        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          Exercise ID
+          <input
+            type="number"
+            min={1}
+            value={exerciseId}
+            onChange={e => setExerciseId(Number(e.target.value))}
+            style={{
+              padding: "0.25rem 0.5rem",
+              borderRadius: 6,
+              border: "1px solid #374151",
+              background: "#020617",
+              color: "white",
+            }}
+          />
+          <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+            (Temporary: enter an existing exercise_id from the database; later
+            this will be a dropdown.)
+          </span>
         </label>
 
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2 style={{ fontSize: "1rem", margin: 0 }}>Sets</h2>
-            <button
-              type="button"
-              onClick={addSet}
+          <h2>Sets</h2>
+          {sets.map((set, index) => (
+            <div
+              key={index}
               style={{
-                padding: "0.35rem 0.7rem",
-                borderRadius: 999,
-                border: "none",
-                background: "#22c55e",
-                color: "#020617",
-                cursor: "pointer",
-                fontSize: "0.85rem"
+                display: "flex",
+                gap: "0.5rem",
+                alignItems: "center",
+                marginBottom: "0.5rem",
               }}
             >
-              + Add set
-            </button>
-          </div>
-
-          {sets.length === 0 && (
-            <div style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>
-              No sets yet. Add your first set.
-            </div>
-          )}
-
-          <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {sets.map((set, index) => (
-              <div
-                key={index}
+              <input
+                type="number"
+                min={1}
+                value={set.repAmount}
+                onChange={e =>
+                  updateSet(index, { repAmount: Number(e.target.value) })
+                }
+                placeholder="Reps"
                 style={{
-                  padding: "0.75rem",
-                  borderRadius: "0.75rem",
+                  width: 80,
+                  padding: "0.25rem 0.5rem",
+                  borderRadius: 6,
+                  border: "1px solid #374151",
                   background: "#020617",
-                  border: "1px solid #111827",
-                  display: "grid",
-                  gridTemplateColumns: "2fr 1fr 1fr auto",
-                  gap: "0.5rem",
-                  alignItems: "center"
+                  color: "white",
                 }}
-              >
-                <select
-                  value={set.exerciseId}
-                  onChange={e => updateSet(index, { exerciseId: Number(e.target.value) })}
-                  style={{ padding: "0.35rem 0.5rem", borderRadius: 8, border: "1px solid #374151" }}
-                >
-                  {exercises.map(ex => (
-                    <option key={ex.id} value={ex.id}>
-                      {ex.name}
-                    </option>
-                  ))}
-                </select>
-
+              />
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={set.weightAmount}
+                onChange={e =>
+                  updateSet(index, { weightAmount: Number(e.target.value) })
+                }
+                placeholder="Weight (kg)"
+                style={{
+                  width: 120,
+                  padding: "0.25rem 0.5rem",
+                  borderRadius: 6,
+                  border: "1px solid #374151",
+                  background: "#020617",
+                  color: "white",
+                }}
+              />
+              <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <input
-                  type="number"
-                  min={1}
-                  value={set.reps}
-                  onChange={e => updateSet(index, { reps: Number(e.target.value) })}
-                  style={{ padding: "0.35rem 0.5rem", borderRadius: 8, border: "1px solid #374151" }}
-                  placeholder="Reps"
-                />
-
-                <input
-                  type="number"
-                  min={0}
-                  value={set.weight ?? ""}
+                  type="checkbox"
+                  checked={set.toFailure}
                   onChange={e =>
-                    updateSet(index, {
-                      weight: e.target.value === "" ? undefined : Number(e.target.value)
-                    })
+                    updateSet(index, { toFailure: e.target.checked })
                   }
-                  style={{ padding: "0.35rem 0.5rem", borderRadius: 8, border: "1px solid #374151" }}
-                  placeholder="Weight (kg)"
                 />
-
-                <label style={{ fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                  <input
-                    type="checkbox"
-                    checked={set.toFailure}
-                    onChange={e => updateSet(index, { toFailure: e.target.checked })}
-                  />
-                  To failure
-                </label>
-
+                to failure
+              </label>
+              {sets.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => removeSet(index)}
+                  onClick={() => removeSetRow(index)}
                   style={{
-                    marginLeft: "0.5rem",
-                    borderRadius: 999,
                     border: "none",
-                    background: "#ef4444",
-                    color: "#f9fafb",
-                    padding: "0.3rem 0.6rem",
+                    borderRadius: 999,
+                    padding: "0.25rem 0.5rem",
+                    background: "#b91c1c",
+                    color: "white",
                     cursor: "pointer",
-                    fontSize: "0.75rem"
                   }}
                 >
-                  Remove
+                  X
                 </button>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addSetRow}
+            style={{
+              marginTop: "0.25rem",
+              border: "none",
+              borderRadius: 999,
+              padding: "0.25rem 0.75rem",
+              background: "#1d4ed8",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            + Add set
+          </button>
         </div>
 
         <button
           type="submit"
-          disabled={saving || sets.length === 0}
+          disabled={submitting}
           style={{
-            marginTop: "0.5rem",
-            padding: "0.6rem 0.9rem",
+            marginTop: "0.75rem",
+            padding: "0.5rem 1rem",
             borderRadius: 999,
             border: "none",
-            background: sets.length === 0 ? "#4b5563" : "#22c55e",
+            background: "#22c55e",
             color: "#020617",
-            cursor: sets.length === 0 ? "not-allowed" : "pointer",
-            fontWeight: 600
+            fontWeight: 600,
+            cursor: submitting ? "not-allowed" : "pointer",
           }}
         >
-          {saving ? "Saving..." : "Save workout"}
+          {submitting ? "Saving..." : "Save workout"}
         </button>
       </form>
     </div>

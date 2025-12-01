@@ -1,15 +1,22 @@
-import type { Api } from "./base";
-import type { Exercise, Workout, NewWorkout } from "../types";
+import {
+  BodyPart,
+  ExerciseByBodyPartRow,
+  WorkoutSummary,
+  NewWorkout,
+  NewWorkoutResponse,
+  NewWorkoutSetsRequest,
+  NewWorkoutSetsResponse,
+} from "../types";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+const BASE_URL = "http://localhost:3000";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
-      ...(options.headers || {})
+      ...(options.headers || {}),
     },
-    ...options
+    ...options,
   });
 
   if (!res.ok) {
@@ -20,37 +27,52 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const httpApi: Api = {
-  async register(email: string, password: string) {
-    return request<{ token: string; userId: number }>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password })
-    });
-  },
+// === GET endpoints ===
 
-  async login(email: string, password: string) {
-    return request<{ token: string; userId: number }>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password })
-    });
-  },
+// GET /body_parts
+export async function getBodyParts(): Promise<BodyPart[]> {
+  return request<BodyPart[]>("/body_parts");
+}
 
-  async getExercises() {
-    return request<Exercise[]>("/api/exercises");
-  },
+// GET /exercises/name/:id   (id is actually body_part.name)
+export async function getExercisesByBodyPartName(
+  bodyPartName: string,
+): Promise<ExerciseByBodyPartRow[]> {
+  return request<ExerciseByBodyPartRow[]>(
+    `/exercises/name/${encodeURIComponent(bodyPartName)}`,
+  );
+}
 
-  async getWorkouts() {
-    return request<Workout[]>("/api/workouts");
-  },
+// GET /exercises/id/:id   (id is body_part.id)
+export async function getExercisesByBodyPartId(
+  bodyPartId: number,
+): Promise<ExerciseByBodyPartRow[]> {
+  return request<ExerciseByBodyPartRow[]>(`/exercises/id/${bodyPartId}`);
+}
 
-  async getWorkout(id: number) {
-    return request<Workout>(`/api/workouts/${id}`);
-  },
+// GET /workouts
+export async function getWorkouts(): Promise<WorkoutSummary[]> {
+  return request<WorkoutSummary[]>("/workouts");
+}
 
-  async createWorkout(payload: NewWorkout) {
-    return request<Workout>("/api/workouts", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-  }
-};
+// === POST endpoints ===
+
+// POST /workout  -> { id }
+export async function createWorkout(
+  payload: NewWorkout,
+): Promise<NewWorkoutResponse> {
+  return request<NewWorkoutResponse>("/workout", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// POST /workout_sets  -> { success, insertedIds?, error? }
+export async function createWorkoutSets(
+  payload: NewWorkoutSetsRequest,
+): Promise<NewWorkoutSetsResponse> {
+  return request<NewWorkoutSetsResponse>("/workout_sets", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
