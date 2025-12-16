@@ -55,6 +55,7 @@ app.get("/workouts", async (req, res) => {
 
     const [rows] = await db.query(`
       SELECT 
+        workout.id AS workout_id,
         exercise.id AS exercise_id,
         exercise.name AS exercise_name,
         exercise.image_url,
@@ -93,6 +94,7 @@ app.get("/workouts", async (req, res) => {
 
       if (!workouts[key]) {
         workouts[key] = {
+          workout_id: row.workout_id,
           exercise_name: row.exercise_name,
           image_url: row.image_url,
           workout_date: row.workout_date,

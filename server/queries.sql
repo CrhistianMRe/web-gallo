@@ -17,7 +17,7 @@ WHERE body_part.name = "Chest"
 
 -- List of workouts with sets, weight amount, to_failure, exercise name, and body part name
 
-SELECT exercise.name AS exercise_name, exercise.image_url, workout.workout_date, workout.workout_length, workout_set.rep_amount, workout_set.weight_amount, workout_set.to_failure
+SELECT exercise.name AS exercise_name, exercise.image_url, workout.id AS workout_id, workout.workout_date, workout.workout_length, workout_set.rep_amount, workout_set.weight_amount, workout_set.to_failure
 FROM exercise
 INNER JOIN workout
 ON workout.exercise_id = exercise.id
