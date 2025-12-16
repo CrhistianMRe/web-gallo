@@ -32,6 +32,15 @@ INNER JOIN exercise_body_part
 ON exercise_body_part.body_part_id = body_part.id
 WHERE exercise_body_part.exercise_id = 1
 
+-- Delete workout by workout id
+
+
+DELETE FROM workout_set
+WHERE workout_set.workout_id = 3;
+
+DELETE FROM workout
+WHERE workout.id = 3;
+
 
 -- Insert of workout table
 

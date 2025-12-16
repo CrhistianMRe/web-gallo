@@ -173,6 +173,44 @@ app.post("/workout_sets", async (req, res) => {
   }
 });
 
+// Delete workout sets by workout id
+app.delete("/workout/:id", async (req, res) => {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [result] = await connection.query(
+      "DELETE FROM workout_set WHERE workout_id = ?",
+      [req.params.id]
+    );
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      workoutId: req.params.id,
+      deletedRows: result.affectedRows,
+      message:
+        result.affectedRows > 0
+          ? "Workout sets deleted successfully"
+          : "No workout sets found for this workout"
+    });
+
+  } catch (err) {
+    await connection.rollback();
+
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+
+  } finally {
+    connection.release();
+  }
+});
+
+
 app.listen(3000, () => console.log("API running on port 3000"));
 
 
