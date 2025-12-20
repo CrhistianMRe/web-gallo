@@ -2,6 +2,8 @@
 export interface BodyPart {
   id: number;
   name: string;
+  description: string | null;
+  image_url: string | null;
 }
 
 // Row shape returned by /exercises/name/:id and /exercises/id/:id
@@ -9,7 +11,7 @@ export interface ExerciseByBodyPartRow {
   exercise_id: number;
   name: string;
   description: string | null;
-  weight_required: 0 | 1;  // TINYINT(1) in MySQL/MariaDB
+  weight_required: 0 | 1; // TINYINT(1) in MySQL/MariaDB
   image_url: string | null;
 }
 
@@ -22,9 +24,11 @@ export interface WorkoutSetSummary {
 
 // Aggregated workout object returned by GET /workouts
 export interface WorkoutSummary {
+  workout_id: number;             // NEW: required for delete
+  exercise_id: number;            // NEW: useful for linking to exercise later
   exercise_name: string;
   image_url: string | null;
-  workout_date: string;            // 'YYYY-MM-DD'
+  workout_date: string;           // often ISO string; UI can slice(0, 10)
   workout_length: number | string; // DECIMAL(4,2)
   body_parts: string[];
   sets: WorkoutSetSummary[];

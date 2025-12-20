@@ -110,6 +110,59 @@ export function ExerciseCatalogPage() {
             );
           })}
         </div>
+
+        {selectedBodyPart && (
+          <div
+            style={{
+              marginTop: "0.75rem",
+              background: "#020617",
+              border: "1px solid #111827",
+              borderRadius: 12,
+              padding: "0.75rem 1rem",
+              display: "flex",
+              gap: "0.75rem",
+              alignItems: "center",
+            }}
+          >
+            {selectedBodyPart.image_url && (
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  flexShrink: 0,
+                  background: "#0f172a",
+                }}
+              >
+                <img
+                  src={selectedBodyPart.image_url}
+                  alt={selectedBodyPart.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+            )}
+
+            <div style={{ minWidth: 0 }}
+            >
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                  marginBottom: "0.15rem",
+                }}
+              >
+                {selectedBodyPart.name}
+              </div>
+              {selectedBodyPart.description && (
+                <div style={{ fontSize: "0.85rem", opacity: 0.9 }}
+                >
+                  {selectedBodyPart.description}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Exercises grid */}

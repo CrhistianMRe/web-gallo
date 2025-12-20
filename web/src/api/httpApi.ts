@@ -24,55 +24,89 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
 
-  return res.json() as Promise<T>;
+  if (res.status === 204) return undefined as T;
+
+  const text = await res.text();
+  if (!text) return undefined as T;
+
+  return JSON.parse(text) as T;
+}
+
+type AnyRow = Record<string, any>;
+
+function to01(v: any): 0 | 1 {
+  if (v === 1 || v === "1" || v === true) return 1;
+  return 0;
+}
+
+function normalizeExerciseRow(r: AnyRow): ExerciseByBodyPartRow {
+  const exercise_id = Number(r.exercise_id ?? r.exerciseId ?? r.id ?? r.exerciseID);
+  const name = String(r.name ?? r.exercise_name ?? r.exerciseName ?? "");
+  const description =
+    (r.description ?? r.exercise_description ?? r.exerciseDescription ?? null) as string | null;
+
+  const weight_required = to01(r.weight_required ?? r.weightRequired ?? r.weight);
+
+  const image_url =
+    (r.image_url ?? r.imageUrl ?? r.imageURL ?? null) as string | null;
+
+  return {
+    exercise_id: Number.isFinite(exercise_id) ? exercise_id : 0,
+    name,
+    description,
+    weight_required,
+    image_url,
+  };
 }
 
 // === GET endpoints ===
 
-// GET /body_parts
 export async function getBodyParts(): Promise<BodyPart[]> {
   return request<BodyPart[]>("/body_parts");
 }
 
-// GET /exercises/name/:id   (id is actually body_part.name)
 export async function getExercisesByBodyPartName(
   bodyPartName: string,
 ): Promise<ExerciseByBodyPartRow[]> {
-  return request<ExerciseByBodyPartRow[]>(
+  const rows = await request<any[]>(
     `/exercises/name/${encodeURIComponent(bodyPartName)}`,
   );
+  return (rows ?? []).map(normalizeExerciseRow);
 }
 
-// GET /exercises/id/:id   (id is body_part.id)
 export async function getExercisesByBodyPartId(
   bodyPartId: number,
 ): Promise<ExerciseByBodyPartRow[]> {
-  return request<ExerciseByBodyPartRow[]>(`/exercises/id/${bodyPartId}`);
+  const rows = await request<any[]>(`/exercises/id/${bodyPartId}`);
+  return (rows ?? []).map(normalizeExerciseRow);
 }
 
-// GET /workouts
 export async function getWorkouts(): Promise<WorkoutSummary[]> {
   return request<WorkoutSummary[]>("/workouts");
 }
 
 // === POST endpoints ===
 
-// POST /workout  -> { id }
-export async function createWorkout(
-  payload: NewWorkout,
-): Promise<NewWorkoutResponse> {
+export async function createWorkout(payload: NewWorkout): Promise<NewWorkoutResponse> {
   return request<NewWorkoutResponse>("/workout", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-// POST /workout_sets  -> { success, insertedIds?, error? }
 export async function createWorkoutSets(
   payload: NewWorkoutSetsRequest,
 ): Promise<NewWorkoutSetsResponse> {
   return request<NewWorkoutSetsResponse>("/workout_sets", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+// === DELETE endpoints ===
+
+export async function deleteWorkout(workoutId: number): Promise<void> {
+  return request<void>(`/workouts/${workoutId}`, {
+    method: "DELETE",
   });
 }
