@@ -52,7 +52,6 @@ app.get("/exercises/id/:id", async (req, res) => {
 // List of workouts
 app.get("/workouts", async (req, res) => {
   try {
-
     const [rows] = await db.query(`
       SELECT 
         workout.id AS workout_id,
@@ -63,34 +62,24 @@ app.get("/workouts", async (req, res) => {
         workout.workout_length,
         workout_set.rep_amount,
         workout_set.weight_amount,
-        workout_set.to_failure
-      FROM exercise
-      INNER JOIN workout
+        workout_set.to_failure,
+        body_part.name AS body_part_name
+      FROM workout
+      INNER JOIN exercise
         ON workout.exercise_id = exercise.id
       INNER JOIN workout_set
         ON workout_set.workout_id = workout.id
-    `);
-
-    const [bodyRows] = await db.query(`
-      SELECT 
-        exercise_body_part.exercise_id,
-        body_part.name AS body_part_name
-      FROM exercise_body_part
-      INNER JOIN body_part 
+      LEFT JOIN exercise_body_part
+        ON exercise_body_part.exercise_id = exercise.id
+      LEFT JOIN body_part
         ON body_part.id = exercise_body_part.body_part_id
     `);
 
-    const bodyPartsByExercise = {};
-    bodyRows.forEach(row => {
-      if (!bodyPartsByExercise[row.exercise_id]) {
-        bodyPartsByExercise[row.exercise_id] = [];
-      }
-      bodyPartsByExercise[row.exercise_id].push(row.body_part_name);
-    });
-
+    // Agrupar workouts por id
     const workouts = {};
+
     rows.forEach(row => {
-      const key = row.workout_date + '_' + row.exercise_name;
+      const key = row.workout_id;
 
       if (!workouts[key]) {
         workouts[key] = {
@@ -99,9 +88,12 @@ app.get("/workouts", async (req, res) => {
           image_url: row.image_url,
           workout_date: row.workout_date,
           workout_length: row.workout_length,
-          body_parts: bodyPartsByExercise[row.exercise_id] || [],
+          body_parts: row.body_part_name ? [row.body_part_name] : [],
           sets: []
         };
+      } else if (row.body_part_name && !workouts[key].body_parts.includes(row.body_part_name)) {
+        // Evitar duplicados de body_parts
+        workouts[key].body_parts.push(row.body_part_name);
       }
 
       workouts[key].sets.push({
@@ -114,6 +106,7 @@ app.get("/workouts", async (req, res) => {
     res.json(Object.values(workouts));
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -172,6 +165,7 @@ app.post("/workout_sets", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // Delete workout sets by workout id
 app.delete("/workout/:id", async (req, res) => {
