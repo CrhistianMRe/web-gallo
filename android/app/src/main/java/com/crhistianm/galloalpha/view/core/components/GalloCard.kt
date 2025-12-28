@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.crhistianm.galloalpha.R
 
 @Composable
@@ -38,7 +39,7 @@ fun GalloCard(
     topText: String = "",
     bottomText: String = "",
     primaryText: String = "",
-    icon: Int
+    imageUrl: String
 ) {
     Card (
         colors = CardDefaults.cardColors(
@@ -57,19 +58,20 @@ fun GalloCard(
             )
     ) {
         Column {
-            Row (verticalAlignment = Alignment.CenterVertically){
+            Row {
                 Text(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(start = 10.dp),
                     text = topText,
-                    textAlign = TextAlign.Center,
-                    fontSize = 20.sp,
+                    textAlign = TextAlign.Start,
+                    fontSize = 20.sp
                 )
             }
 
             HorizontalDivider()
 
             Row {
-                Icon(
+                AsyncImage(
                     modifier = Modifier
                         .padding(top = 7.dp, start = 10.dp)
                         .size(50.dp)
@@ -77,21 +79,24 @@ fun GalloCard(
                             shape = RoundedCornerShape(30f),
                             color = Color.White.copy(0.1f)
                         ),
-                    painter = painterResource(icon),
-                    contentDescription = null)
+                    model = imageUrl,
+                    contentDescription = null,
+                    onError = {
+                    }
+                )
                 Column (
                     modifier = Modifier.padding(start = 100.dp)
                 ){
-                    Text(text = primaryText, fontSize = 18.sp)
+                    Text(
+                        text = primaryText,
+                        fontSize = 14.sp,
+                    )
                     Spacer(Modifier.height(10.dp))
                     Row {
                         Icon(painter = painterResource(R.drawable.icon_time), contentDescription = null, tint = Color.Gray)
                         Text(text = " $bottomText", fontSize = 18.sp, color = Color.Gray)
                     }
                 }
-            }
-            Row {
-
             }
         }
     }
@@ -105,6 +110,6 @@ private fun GalloCardPreview(){
             .width(200.dp)
             .height(50.dp),
         primaryText = "Top",
-        icon = R.drawable.icon_workout
+        imageUrl = "https://avatars.githubusercontent.com/u/106357444?s=48&v=4"
     )
 }
