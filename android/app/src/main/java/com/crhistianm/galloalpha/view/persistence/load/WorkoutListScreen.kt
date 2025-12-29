@@ -38,113 +38,65 @@ import com.crhistianm.galloalpha.R
 import com.crhistianm.galloalpha.data.response.WorkoutResponse
 import com.crhistianm.galloalpha.view.core.components.GalloBottomBar
 import com.crhistianm.galloalpha.view.core.components.GalloCard
+import com.crhistianm.galloalpha.view.core.components.GalloMainLayout
 import com.crhistianm.galloalpha.view.core.components.GalloTopAppBar
 import com.crhistianm.galloalpha.view.core.components.model.NavItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+//Solo quita el navigate y el item para hacer el commit del la modularizacion de la main screen
 @Composable
-@Preview
 fun WorkoutListScreen(
-    viewModel: WorkoutListViewModel = hiltViewModel()
+    viewModel: WorkoutListViewModel = hiltViewModel(),
 ) {
 
-    val listState: LazyListState = rememberLazyListState()
-    val coroutineScope: CoroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
 
     LaunchedEffect(Unit) {
         viewModel.loadWorkoutList()
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0.2f to Color(0xFF131212),
-                        0.6f to Color.Black,
+    GalloMainLayout(
+        title = "Workout list",
+        bottomBar = {
+            GalloBottomBar(
+                startingIndex = 0,
+                itemList = listOf (
+                    NavItem(
+                        name = "Workouts",
+                        icon = R.drawable.icon_workout,
                     )
                 )
             )
-    ) {
-        Scaffold (
-            modifier = Modifier
-                .fillMaxSize(),
-            floatingActionButtonPosition = FabPosition.Center,
-            containerColor = Color.Transparent,
-            contentColor = Color.Transparent,
-            floatingActionButton = {
-                /*GalloFloatingButton(
-                    onClick = {}
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add icon image",
-                        modifier = Modifier.size(40.dp)
-                    )
-                }*/
-            },
-            topBar = {
-                GalloTopAppBar(title = "Workout List", navigationIcon = {}) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Calendar image",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(39.dp)
-                            .padding(end = 5.dp)
-                            .clickable{
-                                coroutineScope.launch {
-                                    listState.animateScrollToItem(0)
-                                }
-                            }
-                    )
-                }
-            },
-            bottomBar = {
-                GalloBottomBar(
-                    startingIndex = 0,
-                    itemList = listOf (
-                        NavItem(
-                            name = "Workouts",
-                            icon = R.drawable.icon_workout
-                        )
-                    )
-                )
+        },
+    )
+    { innerPadding, listState->
+        when(uiState.isLoading){
+            true -> {
+                //Loading animation
             }
-
-        ) { innerPadding ->
-            when(uiState.isLoading){
-                true ->{
-                    //Loading animation
-                }
-                false ->{
-                    LazyColumn (
-                        modifier = Modifier.padding(innerPadding).fillMaxSize(),
-                        state = listState,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        items(uiState.workoutList) { workout ->
-                            GalloCard(
-                                topText = workout.exerciseName,
-                                primaryText = workout.workoutDate,
-                                bottomText = workout.workoutLength,
-                                imageUrl = workout.imageUrl
-                            )
-                            Spacer(modifier = Modifier.height(20.dp))
-                            HorizontalDivider()
-                            Spacer(modifier = Modifier.height(20.dp))
-                        }
+            false ->{
+                LazyColumn (
+                    modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                    state = listState,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    items(uiState.workoutList) { workout ->
+                        GalloCard(
+                            topText = workout.exerciseName,
+                            primaryText = workout.workoutDate,
+                            bottomText = workout.workoutLength,
+                            imageUrl = workout.imageUrl
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
                 }
             }
-
         }
-    }
 
+    }
 
 }
 
