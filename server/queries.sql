@@ -1,51 +1,76 @@
+USE webgallo;
 
--- Body parts list
-
-SELECT * FROM body_part
-
-
--- List of exercises by body part name/id
-SELECT exercise_id, exercise.name, exercise.description, exercise.weight_required, exercise.image_url
-FROM exercise 
-INNER JOIN exercise_body_part 
-ON exercise_body_part.exercise_id = exercise.id
-INNER JOIN body_part 
-ON body_part.id = exercise_body_part.body_part_id
-WHERE body_part.name = "Chest"
--- WHERE body_part.id = 1
-
-
--- List of workouts with sets, weight amount, to_failure, exercise name, and body part name
-
-SELECT exercise.name AS exercise_name, exercise.image_url, workout.id AS workout_id, workout.workout_date, workout.workout_length, workout_set.rep_amount, workout_set.weight_amount, workout_set.to_failure
-FROM exercise
-INNER JOIN workout
-ON workout.exercise_id = exercise.id
-INNER JOIN workout_set
-ON workout_set.workout_id = workout.id
-
--- List of body parts by exercise
-
-SELECT body_part.name as body_part_name
+-- Body parts list (includes description + image_url)
+SELECT id, name, description, image_url
 FROM body_part
-INNER JOIN exercise_body_part
-ON exercise_body_part.body_part_id = body_part.id
-WHERE exercise_body_part.exercise_id = 1
+ORDER BY id;
 
--- Delete workout by workout id
+-- Verify body part media fields are populated (should return 0 rows)
+SELECT id, name, description, image_url
+FROM body_part
+WHERE description IS NULL OR image_url IS NULL
+ORDER BY id;
 
+-- Exercise catalog (includes description + image_url)
+SELECT id, name, description, weight_required, image_url
+FROM exercise
+ORDER BY id;
 
-DELETE FROM workout_set
-WHERE workout_set.workout_id = 3;
+-- Verify exercise media fields are populated (should return 0 rows)
+SELECT id, name, description, image_url
+FROM exercise
+WHERE description IS NULL OR image_url IS NULL
+ORDER BY id;
 
-DELETE FROM workout
-WHERE workout.id = 3;
+-- List exercises by body part NAME
+SELECT
+  ebp.exercise_id AS exercise_id,
+  e.name,
+  e.description,
+  e.weight_required,
+  e.image_url
+FROM exercise e
+INNER JOIN exercise_body_part ebp
+  ON ebp.exercise_id = e.id
+INNER JOIN body_part bp
+  ON bp.id = ebp.body_part_id
+WHERE bp.name = 'Chest'
+ORDER BY e.id;
 
+-- List exercises by body part ID
+SELECT
+  ebp.exercise_id AS exercise_id,
+  e.name,
+  e.description,
+  e.weight_required,
+  e.image_url
+FROM exercise e
+INNER JOIN exercise_body_part ebp
+  ON ebp.exercise_id = e.id
+INNER JOIN body_part bp
+  ON bp.id = ebp.body_part_id
+WHERE bp.id = 1
+ORDER BY e.id;
 
--- Insert of workout table
+-- Workouts with sets (raw joined rows; one row per set)
+SELECT
+  w.id AS workout_id,
+  w.workout_date,
+  w.workout_length,
+  w.exercise_id,
+  e.name AS exercise_name,
+  e.image_url,
+  ws.id AS workout_set_id,
+  ws.rep_amount,
+  ws.weight_amount,
+  ws.to_failure
+FROM workout w
+INNER JOIN exercise e
+  ON e.id = w.exercise_id
+LEFT JOIN workout_set ws
+  ON ws.workout_id = w.id
+ORDER BY w.workout_date DESC, w.id DESC, ws.id ASC;
 
-INSERT INTO workout (workout_date, workout_length, exercise_id) VALUES ("2004-04-23", 0040.00, 1)
-
-
--- Insert of workout_set table
-INSERT INTO workout_set (rep_amount, weight_amount, to_failure, workout_id) VALUES (10, 80.0, 1, 1)
+-- Delete a workout
+-- Because workout_set.workout_id has ON DELETE CASCADE, this deletes the workout AND its sets.
+DELETE FROM workout WHERE id = 1;
