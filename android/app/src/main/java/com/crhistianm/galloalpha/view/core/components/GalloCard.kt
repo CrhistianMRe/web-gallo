@@ -93,8 +93,10 @@ fun GalloCard(
                     )
                     Spacer(Modifier.height(10.dp))
                     Row {
-                        Icon(painter = painterResource(R.drawable.icon_time), contentDescription = null, tint = Color.Gray)
-                        Text(text = " $bottomText", fontSize = 18.sp, color = Color.Gray)
+                        if(bottomText.isNotEmpty()){
+                            Icon(painter = painterResource(R.drawable.icon_time), contentDescription = null, tint = Color.Gray)
+                            Text(text = " $bottomText", fontSize = 18.sp, color = Color.Gray)
+                        }
                     }
                 }
             }
