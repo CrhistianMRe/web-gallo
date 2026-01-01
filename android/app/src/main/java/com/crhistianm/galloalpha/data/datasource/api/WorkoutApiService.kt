@@ -6,5 +6,6 @@ import retrofit2.http.GET
 interface WorkoutApiService{
 
     @GET("workouts")
-    suspend fun viewAll():List<WorkoutResponse>
+    suspend fun getAll():List<WorkoutResponse>
+
 }

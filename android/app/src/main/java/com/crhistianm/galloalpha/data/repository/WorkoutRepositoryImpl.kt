@@ -7,6 +7,6 @@ import javax.inject.Inject
 class WorkoutRepositoryImpl @Inject constructor(val api: WorkoutApiService): WorkoutRepository{
 
     override suspend fun findAll(): List<WorkoutResponse> {
-        return api.viewAll()
+        return api.getAll()
     }
 }
