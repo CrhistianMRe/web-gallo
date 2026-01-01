@@ -4,12 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.crhistianm.galloalpha.view.core.navigation.Screens.Load
+import com.crhistianm.galloalpha.view.core.navigation.Screens.WorkoutList
+import com.crhistianm.galloalpha.view.core.navigation.Screens.ExerciseList
+import com.crhistianm.galloalpha.view.persistence.load.ExerciseListScreen
 import com.crhistianm.galloalpha.view.persistence.load.WorkoutListScreen
 
 @Composable
 fun NavigationWrapper() {
-    val backStack = rememberNavBackStack(Load)
+    val backStack = rememberNavBackStack(ExerciseList)
 
 
     //Navegacion es como un bean o dependencia, solo tiene la logica de navegar
@@ -18,9 +20,19 @@ fun NavigationWrapper() {
     // Recorda que jetpack funciona por recomposicion. La screen escucha eventos y los hace segun las dependencias que tenga
     NavDisplay(
         backStack = backStack,
+        onBack = { backStack.removeLastOrNull() },
         entryProvider = entryProvider {
-            entry <Load> {
-                WorkoutListScreen()
+            entry <WorkoutList> {
+                WorkoutListScreen() {
+                    backStack.removeLastOrNull()
+                    backStack.add(ExerciseList)
+                }
+            }
+            entry<ExerciseList>{
+                ExerciseListScreen() {
+                    backStack.removeLastOrNull()
+                    backStack.add(WorkoutList)
+                }
             }
         }
 
