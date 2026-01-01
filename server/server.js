@@ -8,8 +8,8 @@ app.use(cors());
 
 const db = await mysql.createPool({
   host: "localhost",
-  user: "gallo_user",
-  password: "minhchi09",
+  user: "root3",
+  password: "toor",
   database: "webgallo",
   port: 3306,
 });
@@ -36,6 +36,18 @@ app.get("/exercises/name/:id", async (req, res) => {
         "ON body_part.id = exercise_body_part.body_part_id " +
         "WHERE body_part.name = ?",
       [req.params.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/exercises", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+        "SELECT exercise.id, exercise.name, exercise.description, exercise.weight_required, exercise.image_url " +
+        "FROM exercise " 
     );
     res.json(rows);
   } catch (err) {
