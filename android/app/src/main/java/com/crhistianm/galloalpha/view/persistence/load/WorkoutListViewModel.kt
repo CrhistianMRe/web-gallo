@@ -22,6 +22,7 @@ class WorkoutListViewModel @Inject constructor(val repository: WorkoutRepository
         loadingState(true)
         viewModelScope.launch(Dispatchers.IO){
             _uiState.update { state ->
+                //map login it think it should be on domain but i will no create a full arch only for that
                 state.copy(workoutList = repository.findAll().map { it ->
                     it.copy(workoutDate = it.workoutDate.removeRange(10, 24))
                 })
