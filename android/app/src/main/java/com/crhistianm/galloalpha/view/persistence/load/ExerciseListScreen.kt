@@ -24,8 +24,8 @@ import kotlinx.coroutines.CoroutineScope
 
 @Composable
 fun ExerciseListScreen (
+    navigateToWorkout: () -> Unit
 ) {
-
     GalloMainLayout(
         title = "Exercise List",
         bottomBar = {
@@ -35,6 +35,7 @@ fun ExerciseListScreen (
                     NavItem(
                         name = "Workouts",
                         icon = R.drawable.icon_workout,
+                        onClick = { navigateToWorkout() }
                     ),
                     NavItem(
                         name = "Exercises",
@@ -61,7 +62,5 @@ fun ExerciseListScreen (
         }
 
     }
-
-
 
 }

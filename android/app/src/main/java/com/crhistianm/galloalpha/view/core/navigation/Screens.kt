@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 sealed class Screens: NavKey {
 
     @Serializable
-    object Load : Screens()
+    object WorkoutList: Screens()
 
+    @Serializable
+    object ExerciseList: Screens()
 }

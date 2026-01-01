@@ -48,6 +48,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WorkoutListScreen(
     viewModel: WorkoutListViewModel = hiltViewModel(),
+    navigateToExercise: () -> Unit
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -65,6 +66,11 @@ fun WorkoutListScreen(
                     NavItem(
                         name = "Workouts",
                         icon = R.drawable.icon_workout,
+                    ),
+                    NavItem(
+                        name = "Exercises",
+                        icon = R.drawable.icon_exercise,
+                        onClick = { navigateToExercise() }
                     )
                 )
             )
